@@ -41,7 +41,7 @@
   .status b { color: var(--ink); font-variant-numeric: tabular-nums; }
 
   .list { display: flex; flex-direction: column; gap: 10px; }
-  .opt { position: relative; overflow: hidden; display: grid; grid-template-columns: 22px 58px 1fr auto; align-items: center; gap: 12px;
+  .opt { position: relative; overflow: hidden; display: grid; grid-template-columns: 22px 52px 1fr auto; align-items: center; gap: 12px;
          width: 100%; min-height: 64px; padding: 10px 14px; text-align: left; font: inherit; color: inherit;
          background: #fff; border: 2px solid var(--line); border-radius: 14px; cursor: pointer; transition: border-color .15s, transform .1s; }
   .opt:hover:not(:disabled) { border-color: var(--navy); }
@@ -53,9 +53,12 @@
   .box { position: relative; width: 22px; height: 22px; border: 2px solid #9aa8bf; border-radius: 6px; display: grid; place-items: center; background: #fff; }
   .opt.secili .box { background: var(--ok); border-color: var(--ok); }
   .opt.secili .box::after { content: ""; width: 6px; height: 11px; border: solid #fff; border-width: 0 3px 3px 0; transform: translateY(-1px) rotate(45deg); }
-  .chip { position: relative; height: 34px; border-radius: 8px; display: grid; place-items: center; font-weight: 900; font-size: 16px; color: #fff; background: var(--c); letter-spacing: .02em; }
-  .diger .chip { background: #fff; color: var(--muted); border: 2px dashed #b7c2d4; font-size: 12px; }
+  .chip { position: relative; height: 52px; border-radius: 8px; display: grid; place-items: center; font-weight: 900; font-size: 16px; color: #fff; background: var(--c); letter-spacing: .02em; }
+  .diger .chip { background: #fff; color: var(--muted); border: 2px dashed #b7c2d4; font-size: 20px; }
   .name { position: relative; min-width: 0; font-weight: 700; font-size: 15px; line-height: 1.2; }
+  .name small { display: block; font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .04em; margin-top: 2px; }
+  .name small:empty { display: none; }
+  .logo { position: relative; width: 52px; height: 52px; border-radius: 10px; object-fit: contain; background: #fff; border: 1px solid var(--line); }
   .stat { position: relative; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .yuzde { display: block; font-size: 20px; font-weight: 900; }
   .sayi { display: block; font-size: 12px; color: var(--muted); }
@@ -74,7 +77,8 @@
   .toast.on { opacity: 1; transform: translate(-50%, 0); }
 
   @media (max-width: 420px) {
-    .opt { grid-template-columns: 22px 52px 1fr auto; gap: 10px; padding: 10px 12px; }
+    .opt { grid-template-columns: 22px 46px 1fr auto; gap: 10px; padding: 10px 12px; }
+    .logo, .chip { width: 46px; height: 46px; }
     .name { font-size: 14px; }
   }
   @media (prefers-reduced-motion: reduce) { .bar, .opt, .toast { transition: none; } }
@@ -106,13 +110,20 @@
 
 <script>
 const PARTILER = [
+  { id: "BY", ad: "Bağımsızlık Yolu", renk: "#0f766e" },
+  { id: "BKP", ad: "Birleşik Kıbrıs Partisi", renk: "#a21caf" },
   { id: "CTP", ad: "Cumhuriyetçi Türk Partisi", renk: "#d7192a" },
   { id: "DP", ad: "Demokrat Parti", renk: "#3b8a3e" },
   { id: "HP", ad: "Halkın Partisi", renk: "#1d3f8f" },
+  { id: "KSP", ad: "Kıbrıs Sosyalist Partisi", renk: "#9f1239" },
+  { id: "MDP", ad: "Milliyetçi Demokrasi Partisi", renk: "#78350f" },
   { id: "TDP", ad: "Toplumcu Demokrasi Partisi", renk: "#6a2c91" },
+  { id: "TAM", ad: "Toplumsal Adalet ve Mücadele Partisi", renk: "#4d7c0f" },
   { id: "UBP", ad: "Ulusal Birlik Partisi", renk: "#f08a00" },
+  { id: "YKP", ad: "Yeni Kıbrıs Partisi", renk: "#db2777" },
   { id: "YDP", ad: "Yeniden Doğuş Partisi", renk: "#1f7fc4" },
-  { id: "DIGER", ad: "Kararsızım / Başka parti", renk: "#8a96ab", kisa: "DİĞER" }
+  { id: "KARARSIZ", ad: "Kararsızım", renk: "#8a96ab", kisa: "?", ozel: true },
+  { id: "BOYKOT", ad: "Boykot ediyorum / Oy kullanmayacağım", renk: "#5b6b85", kisa: "✕", ozel: true }
 ];
 const OY_ANAHTARI = "kktc_anket_oy_v1";
 
@@ -139,14 +150,16 @@ const satirlar = {};
 PARTILER.forEach(p => {
   const b = document.createElement("button");
   b.type = "button";
-  b.className = "opt" + (p.id === "DIGER" ? " diger" : "");
+  b.className = "opt" + (p.ozel ? " diger" : "");
   b.id = "oy-" + p.id;
   b.style.setProperty("--c", p.renk);
   b.innerHTML = '<span class="bar"></span><span class="box"></span>' +
-    '<span class="chip"></span><span class="name"></span>' +
+    (p.ozel ? '<span class="chip"></span>' : '<img class="logo" alt="" src="logo-' + p.id + '.png">') +
+    '<span class="name"><span class="ad"></span><small></small></span>' +
     '<span class="stat"><span class="yuzde">%0,0</span><span class="sayi">0 oy</span></span>';
-  b.querySelector(".chip").textContent = p.kisa || p.id;
-  b.querySelector(".name").textContent = p.ad;
+  if (p.ozel) b.querySelector(".chip").textContent = p.kisa;
+  b.querySelector(".ad").textContent = p.ad;
+  b.querySelector("small").textContent = p.ozel ? "" : p.id;
   b.addEventListener("click", () => oyVer(p.id));
   liste.appendChild(b);
   satirlar[p.id] = b;
@@ -208,7 +221,7 @@ async function oyVer(id) {
 
 function sonucMetni() {
   const sirali = [...PARTILER].sort((a, b) => (sayilar[b.id] || 0) - (sayilar[a.id] || 0));
-  const satir = sirali.map((p, i) => (i + 1) + ". " + (p.kisa || p.id) + " – " + yuzdeYazi(yuzde(p.id)) + " (" + (sayilar[p.id] || 0).toLocaleString("tr-TR") + " oy)");
+  const satir = sirali.map((p, i) => (i + 1) + ". " + (p.ozel ? p.ad : p.id) + " – " + yuzdeYazi(yuzde(p.id)) + " (" + (sayilar[p.id] || 0).toLocaleString("tr-TR") + " oy)");
   return ["🗳️ KKTC Genel Seçim Anketi – Güncel Sonuçlar",
           "Toplam " + toplamOy().toLocaleString("tr-TR") + " oy", "", ...satir, "",
           "Sen de oy ver: " + (anketAdresi || location.href),
