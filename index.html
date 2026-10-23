@@ -15,18 +15,232 @@
 <meta property="og:locale" content="tr_TR">
 <meta name="twitter:card" content="summary_large_image">
 <style>
-  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0f2340; color: #fff; font-family: "Segoe UI", Roboto, Arial, sans-serif; text-align: center; padding: 16px; box-sizing: border-box; }
-  a { display: inline-block; margin-top: 16px; background: #f2b632; color: #0f2340; font-weight: 800; padding: 14px 24px; border-radius: 12px; text-decoration: none; }
+  /* Afişle aynı kimlik: lacivert başlık, tıklanabilir parti satırları, satır içinde oran çubuğu */
+  :root {
+    --navy: #0f2340;
+    --navy-2: #183257;
+    --paper: #f5f7fb;
+    --ink: #13213a;
+    --muted: #5b6b85;
+    --gold: #f2b632;
+    --line: #dfe5ef;
+    --ok: #1e8e4f;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: "Segoe UI", Roboto, Arial, sans-serif; font-size: 16px; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 0 16px 32px; }
+
+  header { background: linear-gradient(160deg, var(--navy), var(--navy-2)); color: #fff; padding: 28px 16px 24px; }
+  header .wrap { padding-bottom: 0; }
+  .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: .16em; color: var(--gold); }
+  h1 { font-size: clamp(28px, 7vw, 40px); line-height: 1.05; font-weight: 900; margin: 8px 0 0; text-wrap: balance; }
+  .q { font-size: 17px; margin-top: 10px; color: #dce6f5; }
+
+  .status { margin: 20px 0 12px; font-size: 15px; color: var(--muted); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .status b { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  .list { display: flex; flex-direction: column; gap: 10px; }
+  .opt { position: relative; overflow: hidden; display: grid; grid-template-columns: 22px 58px 1fr auto; align-items: center; gap: 12px;
+         width: 100%; min-height: 64px; padding: 10px 14px; text-align: left; font: inherit; color: inherit;
+         background: #fff; border: 2px solid var(--line); border-radius: 14px; cursor: pointer; transition: border-color .15s, transform .1s; }
+  .opt:hover:not(:disabled) { border-color: var(--navy); }
+  .opt:active:not(:disabled) { transform: scale(.99); }
+  .opt:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  .opt:disabled { cursor: default; }
+  .opt.secili { border-color: var(--ok); box-shadow: 0 0 0 2px var(--ok) inset; }
+  .bar { position: absolute; inset: 0 auto 0 0; width: 0; background: var(--c); opacity: .12; transition: width .6s ease; pointer-events: none; }
+  .box { position: relative; width: 22px; height: 22px; border: 2px solid #9aa8bf; border-radius: 6px; display: grid; place-items: center; background: #fff; }
+  .opt.secili .box { background: var(--ok); border-color: var(--ok); }
+  .opt.secili .box::after { content: ""; width: 6px; height: 11px; border: solid #fff; border-width: 0 3px 3px 0; transform: translateY(-1px) rotate(45deg); }
+  .chip { position: relative; height: 34px; border-radius: 8px; display: grid; place-items: center; font-weight: 900; font-size: 16px; color: #fff; background: var(--c); letter-spacing: .02em; }
+  .diger .chip { background: #fff; color: var(--muted); border: 2px dashed #b7c2d4; font-size: 12px; }
+  .name { position: relative; min-width: 0; font-weight: 700; font-size: 15px; line-height: 1.2; }
+  .stat { position: relative; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .yuzde { display: block; font-size: 20px; font-weight: 900; }
+  .sayi { display: block; font-size: 12px; color: var(--muted); }
+
+  .msg { min-height: 22px; margin-top: 14px; font-size: 15px; font-weight: 600; color: var(--ok); }
+  .msg.err { color: #c0392b; }
+
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+  .btn { flex: 1 1 200px; padding: 13px 16px; border-radius: 12px; border: 0; font: inherit; font-weight: 700; cursor: pointer; }
+  .btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  .btn.ana { background: var(--navy); color: #fff; }
+  .btn.ikinci { background: #fff; color: var(--navy); border: 2px solid var(--navy); }
+
+  .note { margin-top: 18px; font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); opacity: 0; background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 999px; font-weight: 600; transition: .2s; pointer-events: none; }
+  .toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (max-width: 420px) {
+    .opt { grid-template-columns: 22px 52px 1fr auto; gap: 10px; padding: 10px 12px; }
+    .name { font-size: 14px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .bar, .opt, .toast { transition: none; } }
 </style>
-<script>
-  // Yönlendirme yalnızca JavaScript ile: Facebook'un tarayıcı robotu bunu izlemez, bu sayfanın kart bilgilerini okur
-  location.replace("https://script.google.com/macros/s/AKfycbxACTESCQDeKd7dE4RG-_pnQae0aMCKyUGgruWJSVX3fEL6YeCSK3yc7tx5szacJz_uzg/exec");
-</script>
 </head>
 <body>
-  <div>
-    <p>Ankete yönlendiriliyorsunuz…</p>
-    <a href="https://script.google.com/macros/s/AKfycbxACTESCQDeKd7dE4RG-_pnQae0aMCKyUGgruWJSVX3fEL6YeCSK3yc7tx5szacJz_uzg/exec">Ankete git</a>
+  <header>
+    <div class="wrap">
+      <div class="eyebrow">KKTC GENEL SEÇİM ANKETİ</div>
+      <h1>SİZ KARAR VERİN</h1>
+      <div class="q">Bugün seçim olsa hangi partiye oy verirsiniz? Kutuya tıklayarak oyunuzu verin.</div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="status"><span>Toplam: <b id="toplam">–</b> oy</span><span id="durum">Sonuçlar yükleniyor…</span></div>
+    <div class="list" id="liste"></div>
+    <div class="msg" id="mesaj" role="status"></div>
+
+    <div class="actions">
+      <button class="btn ana" id="kopyalaSonuc" type="button">Sonuçları kopyala</button>
+      <button class="btn ikinci" id="kopyalaLink" type="button">Anket linkini kopyala</button>
+    </div>
+
+    <p class="note">Her cihazdan tek oy kullanılabilir. Partiler alfabetik sıralıdır. Bu anket bilimsel değildir, kamuoyu nabzı içindir.</p>
   </div>
+
+  <div class="toast" id="toast">Kopyalandı</div>
+
+<script>
+const PARTILER = [
+  { id: "CTP", ad: "Cumhuriyetçi Türk Partisi", renk: "#d7192a" },
+  { id: "DP", ad: "Demokrat Parti", renk: "#3b8a3e" },
+  { id: "HP", ad: "Halkın Partisi", renk: "#1d3f8f" },
+  { id: "TDP", ad: "Toplumcu Demokrasi Partisi", renk: "#6a2c91" },
+  { id: "UBP", ad: "Ulusal Birlik Partisi", renk: "#f08a00" },
+  { id: "YDP", ad: "Yeniden Doğuş Partisi", renk: "#1f7fc4" },
+  { id: "DIGER", ad: "Kararsızım / Başka parti", renk: "#8a96ab", kisa: "DİĞER" }
+];
+const OY_ANAHTARI = "kktc_anket_oy_v1";
+
+const API = "https://script.google.com/macros/s/AKfycbxACTESCQDeKd7dE4RG-_pnQae0aMCKyUGgruWJSVX3fEL6YeCSK3yc7tx5szacJz_uzg/exec";
+const SAYFA = "https://tvplas.github.io/anket/";
+
+// Oylar Google Apps Script'te tutulur; sayfa ona JSON isteğiyle bağlanır
+async function cagir(fn, id) {
+  const url = API + (fn === "oyVer" ? "?islem=oy&secenek=" + encodeURIComponent(id) : "?islem=sonuclar") + "&t=" + Date.now();
+  const r = await fetch(url);
+  const v = await r.json();
+  if (!v.ok) throw new Error(v.hata);
+  return v.sonuclar;
+}
+let sayilar = {};
+let anketAdresi = SAYFA;
+let gonderiliyor = false;
+
+function verilenOy() { try { return localStorage.getItem(OY_ANAHTARI); } catch (e) { return null; } }
+function oyuKaydet(id) { try { localStorage.setItem(OY_ANAHTARI, id); } catch (e) {} }
+
+const liste = document.getElementById("liste");
+const satirlar = {};
+PARTILER.forEach(p => {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "opt" + (p.id === "DIGER" ? " diger" : "");
+  b.id = "oy-" + p.id;
+  b.style.setProperty("--c", p.renk);
+  b.innerHTML = '<span class="bar"></span><span class="box"></span>' +
+    '<span class="chip"></span><span class="name"></span>' +
+    '<span class="stat"><span class="yuzde">%0,0</span><span class="sayi">0 oy</span></span>';
+  b.querySelector(".chip").textContent = p.kisa || p.id;
+  b.querySelector(".name").textContent = p.ad;
+  b.addEventListener("click", () => oyVer(p.id));
+  liste.appendChild(b);
+  satirlar[p.id] = b;
+});
+
+function toplamOy() { return PARTILER.reduce((t, p) => t + (sayilar[p.id] || 0), 0); }
+function yuzde(id) { const t = toplamOy(); return t ? (sayilar[id] || 0) * 100 / t : 0; }
+function yuzdeYazi(v) { return "%" + v.toFixed(1).replace(".", ","); }
+
+function ciz() {
+  const oy = verilenOy();
+  document.getElementById("toplam").textContent = toplamOy().toLocaleString("tr-TR");
+  PARTILER.forEach(p => {
+    const b = satirlar[p.id];
+    const v = yuzde(p.id);
+    b.querySelector(".bar").style.width = v + "%";
+    b.querySelector(".yuzde").textContent = yuzdeYazi(v);
+    b.querySelector(".sayi").textContent = (sayilar[p.id] || 0).toLocaleString("tr-TR") + " oy";
+    b.classList.toggle("secili", oy === p.id);
+    b.disabled = !!oy || gonderiliyor;
+    b.setAttribute("aria-pressed", oy === p.id ? "true" : "false");
+  });
+  if (oy) mesaj("Oyunuz kaydedildi. Katıldığınız için teşekkürler!");
+}
+
+function mesaj(t, hata) {
+  const m = document.getElementById("mesaj");
+  m.textContent = t;
+  m.classList.toggle("err", !!hata);
+}
+
+async function yukle() {
+  try {
+    sayilar = await cagir("sonuclar");
+    const saat = new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    document.getElementById("durum").textContent = "Son güncelleme " + saat;
+    ciz();
+  } catch (e) {
+    document.getElementById("durum").textContent = "Sonuçlar alınamadı, tekrar denenecek";
+  }
+}
+
+async function oyVer(id) {
+  if (verilenOy() || gonderiliyor) return;
+  gonderiliyor = true;
+  ciz();
+  mesaj("Oyunuz gönderiliyor…");
+  try {
+    sayilar = await cagir("oyVer", id);
+    oyuKaydet(id);
+    gonderiliyor = false;
+    ciz();
+  } catch (e) {
+    gonderiliyor = false;
+    ciz();
+    mesaj("Oy gönderilemedi. İnternet bağlantınızı kontrol edip tekrar tıklayın.", true);
+  }
+}
+
+function sonucMetni() {
+  const sirali = [...PARTILER].sort((a, b) => (sayilar[b.id] || 0) - (sayilar[a.id] || 0));
+  const satir = sirali.map((p, i) => (i + 1) + ". " + (p.kisa || p.id) + " – " + yuzdeYazi(yuzde(p.id)) + " (" + (sayilar[p.id] || 0).toLocaleString("tr-TR") + " oy)");
+  return ["🗳️ KKTC Genel Seçim Anketi – Güncel Sonuçlar",
+          "Toplam " + toplamOy().toLocaleString("tr-TR") + " oy", "", ...satir, "",
+          "Sen de oy ver: " + (anketAdresi || location.href),
+          "(Bilimsel değildir, kamuoyu nabzı içindir.)"].join("\n");
+}
+
+async function kopyala(metin) {
+  try {
+    await navigator.clipboard.writeText(metin);
+  } catch (e) {
+    const t = document.createElement("textarea");
+    t.value = metin;
+    t.setAttribute("readonly", "");
+    t.style.cssText = "position:fixed;top:0;left:0;opacity:0";
+    document.body.appendChild(t);
+    t.select();
+    let ok = false;
+    try { ok = document.execCommand("copy"); } catch (e2) {}
+    t.remove();
+    if (!ok) { mesaj("Kopyalanamadı. Metni elle seçip kopyalayın.", true); return; }
+  }
+  const toast = document.getElementById("toast");
+  toast.classList.add("on");
+  setTimeout(() => toast.classList.remove("on"), 1600);
+}
+
+document.getElementById("kopyalaSonuc").addEventListener("click", () => kopyala(sonucMetni()));
+document.getElementById("kopyalaLink").addEventListener("click", () => kopyala(anketAdresi || location.href));
+
+ciz();
+yukle();
+setInterval(yukle, 15000);
+</script>
 </body>
 </html>
